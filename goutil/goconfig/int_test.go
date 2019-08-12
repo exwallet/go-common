@@ -100,7 +100,7 @@ password = ${GOPATH}
 		case bool:
 			value, err = iniconf.Bool(k)
 		case []string:
-			value = iniconf.Strings(k)
+			value = iniconf.Strings(k, ",;")
 		case string:
 			value = iniconf.String(k)
 		default:

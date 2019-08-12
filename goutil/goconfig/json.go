@@ -164,10 +164,13 @@ func (c *JSONConfigContainer) DefaultString(key string, defaultval string) strin
 }
 
 // Strings returns the []string value for a given key.
-func (c *JSONConfigContainer) Strings(key string) []string {
+func (c *JSONConfigContainer) Strings(key string, seps... string) []string {
 	stringVal := c.String(key)
 	if stringVal == "" {
 		return nil
+	}
+	if len(seps) == 0 {
+		return regexSeps.Split(key, -1)
 	}
 	return strings.Split(c.String(key), ";")
 }

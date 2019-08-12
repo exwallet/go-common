@@ -159,7 +159,8 @@ func makeUpdateSql(v interface{}, databaseKey string, pk ...string) (sql *mysql.
 	table = ts.Name()
 	pkName, pkVal := getPrimaryKey(ts, vs, pk...)
 	if pkName == "" {
-		err = fmt.Errorf("%s表找不到主键", table)
+		//err = fmt.Errorf("%s表找不到主键", table)
+		pkName = "id"
 		return
 	}
 	fields := make([]string, 0, ts.NumField())
