@@ -18,7 +18,7 @@ import (
 
 
 */
-type rateLimit struct {
+type RateLimit struct {
 	DuCount             int64           // 周期数量
 	DuUnitSec           int64           // 周期时长,微秒
 	DuMaxTryTimes       int64           // 周期内允许尝试次数
@@ -39,12 +39,12 @@ type durationCore struct {
 }
 
 // durationMaxFailTimes <= 0 不惩罚
-func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor... float64) *rateLimit {
+func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor... float64) *RateLimit {
 	if durationUnitSec <= 0 || durationCount <=0 || durationMaxTryTime <= 0 {
 		panic("RateLimit非法参数")
 	}
 
-	a := &rateLimit{
+	a := &RateLimit{
 		DuCount:             durationCount,
 		DuUnitSec:           durationUnitSec,
 		DuMaxTryTimes:       durationMaxTryTime,
@@ -69,7 +69,7 @@ func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime
 	return a
 }
 
-func (r *rateLimit) rotate(now int64) {
+func (r *RateLimit) rotate(now int64) {
 	if r.tryTimesMap[0] < r.DuMaxFailTimes {
 		// 重置
 		r.activeDuUnitSec = r.DuUnitSec
@@ -85,7 +85,7 @@ func (r *rateLimit) rotate(now int64) {
 }
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
-func (r *rateLimit) doPunish() {
+func (r *RateLimit) doPunish() {
 	r.activeDuUnitSec += int64(float64(r.activeDuUnitSec) * r.PunishFactor)
 	r.activeDuMaxTryTimes -= int64(float64(r.DuMaxTryTimes) * r.PunishFactor)
 	if r.activeDuMaxTryTimes <= 0 {
@@ -95,7 +95,7 @@ func (r *rateLimit) doPunish() {
 }
 
 // 不通过返回等待恢复时间, 秒
-func (r *rateLimit) Pass() (pass bool, coolSec int64) {
+func (r *RateLimit) Pass() (pass bool, coolSec int64) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	now := gotime.UnixNowSec()
@@ -125,7 +125,7 @@ func (r *rateLimit) Pass() (pass bool, coolSec int64) {
 }
 
 // 取得周期热点列表
-func (r *rateLimit) GetTryMap() []int64 {
+func (r *RateLimit) GetTryMap() []int64 {
 	var out = make([]int64, r.DuCount)
 	for i, v := range r.tryTimesMap {
 		out[i] = v
