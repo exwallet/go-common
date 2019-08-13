@@ -12,16 +12,11 @@ import (
 )
 
 func Test_ratelimit(t *testing.T) {
-	r := NewRateLimit(5, 8, 2, 4, 0.5)
+	r := NewRateLimit(2000, 5, 5, 8, 0.4)
 	for {
 		b, coolSec := r.Pass()
-		v := 0
-		if b {
-			v = 1
-		}
-		gologger.Info("%v, 冷静:%d 秒,  命中表: %v", v, coolSec, r.GetTryMap())
-		time.Sleep(time.Second)
+		gologger.Info("通过[%v], 冷静:%d 秒,  计数: %v", b, coolSec, r.GetTryMap())
+		time.Sleep(time.Millisecond*100)
 	}
-
 }
 
