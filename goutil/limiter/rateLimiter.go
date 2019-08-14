@@ -3,7 +3,7 @@
  * @Date: 7/30/19 10:52 AM
  */
 
-package rateLimit
+package limiter
 
 import (
 	"github.com/exwallet/go-common/goutil/gotime"
@@ -11,6 +11,7 @@ import (
 )
 
 /**
+限速器
 --------------------------------------------------------------------------------------------------> tryTimes
        pass             |         fail and wait         |         fail and wait and punish
                         |                               |
@@ -18,7 +19,7 @@ import (
 
 
 */
-type RateLimit struct {
+type RateLimiter struct {
 	DuCount             int64           // 周期数量
 	DuUnitSec           int64           // 周期时长,微秒
 	DuMaxTryTimes       int64           // 周期内允许尝试次数
@@ -39,12 +40,12 @@ type durationCore struct {
 }
 
 // durationMaxFailTimes <= 0 不惩罚
-func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor... float64) *RateLimit {
+func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor... float64) *RateLimiter {
 	if durationUnitSec <= 0 || durationCount <=0 || durationMaxTryTime <= 0 {
-		panic("RateLimit非法参数")
+		panic("RateLimiter非法参数")
 	}
 
-	a := &RateLimit{
+	a := &RateLimiter{
 		DuCount:             durationCount,
 		DuUnitSec:           durationUnitSec,
 		DuMaxTryTimes:       durationMaxTryTime,
@@ -59,7 +60,7 @@ func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime
 	}
 	if len(punishFactor) > 0{
 		if punishFactor[0] < 0 || punishFactor[0] >= 1 {
-			panic("RateLimit 惩罚因子非法定义")
+			panic("RateLimiter 惩罚因子非法定义")
 		}
 		a.PunishFactor = punishFactor[0]
 	}
@@ -69,7 +70,7 @@ func NewRateLimit(durationUnitSec int64, durationCount int64, durationMaxTryTime
 	return a
 }
 
-func (r *RateLimit) rotate(now int64) {
+func (r *RateLimiter) rotate() {
 	if r.tryTimesMap[0] < r.DuMaxFailTimes {
 		// 重置
 		r.activeDuUnitSec = r.DuUnitSec
@@ -80,12 +81,11 @@ func (r *RateLimit) rotate(now int64) {
 	for i := r.DuCount - 1; i > 0; i-- {
 		r.tryTimesMap[i] = r.tryTimesMap[i-1]
 	}
-	r.tryTimesMap[0] = 1
-	r.lastPeriodTime = now
+	r.tryTimesMap[0] = 0
 }
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
-func (r *RateLimit) doPunish() {
+func (r *RateLimiter) doPunish() {
 	r.activeDuUnitSec += int64(float64(r.activeDuUnitSec) * r.PunishFactor)
 	r.activeDuMaxTryTimes -= int64(float64(r.DuMaxTryTimes) * r.PunishFactor)
 	if r.activeDuMaxTryTimes <= 0 {
@@ -94,8 +94,9 @@ func (r *RateLimit) doPunish() {
 	r.hasPunish = true
 }
 
+
 // 不通过返回等待恢复时间, 秒
-func (r *RateLimit) Pass() (pass bool, coolSec int64) {
+func (r *RateLimiter) Pass() (pass bool, coolSec int64) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	now := gotime.UnixNowSec()
@@ -120,12 +121,14 @@ func (r *RateLimit) Pass() (pass bool, coolSec int64) {
 		return false, coolSec
 	}
 	// do pass
-	r.rotate(now)
+	r.rotate()
+	r.tryTimesMap[0] = 1
+	r.lastPeriodTime = now
 	return true, 0
 }
 
 // 取得周期热点列表
-func (r *RateLimit) GetTryMap() []int64 {
+func (r *RateLimiter) GetTryMap() []int64 {
 	var out = make([]int64, r.DuCount)
 	for i, v := range r.tryTimesMap {
 		out[i] = v
