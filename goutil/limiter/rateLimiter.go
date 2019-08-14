@@ -7,7 +7,6 @@ package limiter
 
 import (
 	"github.com/exwallet/go-common/goutil/gotime"
-	"sync"
 )
 
 /**
@@ -25,12 +24,11 @@ type RateLimiter struct {
 	DuMaxTryTimes       int64           // 周期内允许尝试次数
 	DuMaxFailTimes      int64           // 周期内允许最大失败次数
 	PunishFactor        float64         // (0<n<1)惩罚倍数因子,失败次数达多少时, 周期变长, 允许次数变小 .
-	tryTimesMap         map[int64]int64 // 周期热点映射表; map[某个周期]次数, tryTimesMap[0]:当前周期内, tryTimesMap[1]:一个周期前
-	activeDuUnitSec     int64           //
-	activeDuMaxTryTimes int64           //
-	lastPeriodTime      int64           // 最新周期时间点
-	hasPunish           bool            //
-	lock                sync.Mutex      //
+	TryTimesMap         map[int64]int64 // 周期热点映射表; map[某个周期]次数, TryTimesMap[0]:当前周期内, TryTimesMap[1]:一个周期前
+	ActiveDuUnitSec     int64           //
+	ActiveDuMaxTryTimes int64           //
+	LastPeriodTime      int64           // 最新周期时间点
+	HasPunish           bool            //
 }
 
 type durationCore struct {
@@ -50,12 +48,11 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		DuMaxTryTimes:       durationMaxTryTime,
 		DuMaxFailTimes:      durationMaxFailTimes,
 		PunishFactor:        0,
-		tryTimesMap:         make(map[int64]int64, durationCount),
-		activeDuUnitSec:     durationUnitSec,
-		activeDuMaxTryTimes: durationMaxTryTime,
-		lastPeriodTime:      gotime.UnixNowSec(),
-		hasPunish:           false,
-		lock:                sync.Mutex{},
+		TryTimesMap:         make(map[int64]int64, durationCount),
+		ActiveDuUnitSec:     durationUnitSec,
+		ActiveDuMaxTryTimes: durationMaxTryTime,
+		LastPeriodTime:      gotime.UnixNowSec(),
+		HasPunish:           false,
 	}
 	if len(punishFactor) > 0 {
 		if punishFactor[0] < 0 || punishFactor[0] >= 1 {
@@ -64,71 +61,72 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		a.PunishFactor = punishFactor[0]
 	}
 	for i := int64(0); i < durationCount; i++ {
-		a.tryTimesMap[i] = 0
+		a.TryTimesMap[i] = 0
 	}
 	return a
 }
 
-func (r *RateLimiter) rotate() {
-	if r.tryTimesMap[0] < r.DuMaxFailTimes {
+func (r *RateLimiter) rotate(duNum int64) {
+	if duNum > 1 ||  r.TryTimesMap[0] < r.DuMaxFailTimes {
 		// 重置
-		r.activeDuUnitSec = r.DuUnitSec
-		r.activeDuMaxTryTimes = r.DuMaxTryTimes
+		r.ActiveDuUnitSec = r.DuUnitSec
+		r.ActiveDuMaxTryTimes = r.DuMaxTryTimes
 	}
-	r.hasPunish = false
+	r.HasPunish = false
 	//
-	for i := r.DuCount - 1; i > 0; i-- {
-		r.tryTimesMap[i] = r.tryTimesMap[i-1]
+	for duNum > 0 {
+		for i := r.DuCount - 1; i > 0; i-- {
+			r.TryTimesMap[i] = r.TryTimesMap[i-1]
+		}
+		r.TryTimesMap[0] = 0
+		duNum --
 	}
-	r.tryTimesMap[0] = 0
 }
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
 func (r *RateLimiter) doPunish() {
-	r.activeDuUnitSec += int64(float64(r.activeDuUnitSec) * r.PunishFactor)
-	r.activeDuMaxTryTimes -= int64(float64(r.DuMaxTryTimes) * r.PunishFactor)
-	if r.activeDuMaxTryTimes <= 0 {
-		r.activeDuMaxTryTimes = 1
+	r.ActiveDuUnitSec += int64(float64(r.ActiveDuUnitSec) * r.PunishFactor)
+	r.ActiveDuMaxTryTimes -= int64(float64(r.DuMaxTryTimes) * r.PunishFactor)
+	if r.ActiveDuMaxTryTimes <= 0 {
+		r.ActiveDuMaxTryTimes = 1
 	}
-	r.hasPunish = true
+	r.HasPunish = true
 }
 
 // 不通过返回等待恢复时间, 秒
 func (r *RateLimiter) Pass() (pass bool, coolSec int64) {
-	r.lock.Lock()
-	defer r.lock.Unlock()
 	now := gotime.UnixNowSec()
-	tsDiff := now - r.lastPeriodTime
-	if tsDiff <= r.activeDuUnitSec {
-		r.tryTimesMap[0] += 1
-		t := r.tryTimesMap[0]
+	tsDiff := now - r.LastPeriodTime
+	if tsDiff <= r.ActiveDuUnitSec {
+		r.TryTimesMap[0] += 1
+		t := r.TryTimesMap[0]
 		if t <= r.DuMaxTryTimes {
 			// do pass
 			return true, 0
 		}
 		// do fail
 		if t <= r.DuMaxFailTimes {
-			coolSec = r.activeDuUnitSec - tsDiff
+			coolSec = r.ActiveDuUnitSec - tsDiff
 			return false, coolSec
 		}
 		// do fail and punish
-		if r.DuMaxFailTimes <= 0 && !r.hasPunish {
+		if r.DuMaxFailTimes <= 0 && !r.HasPunish {
 			r.doPunish()
 		}
-		coolSec = r.activeDuUnitSec - tsDiff
+		coolSec = r.ActiveDuUnitSec - tsDiff
 		return false, coolSec
 	}
 	// do pass
-	r.rotate()
-	r.tryTimesMap[0] = 1
-	r.lastPeriodTime = now
+	r.rotate(tsDiff / r.ActiveDuUnitSec)
+	r.TryTimesMap[0] = 1
+	r.LastPeriodTime = now
 	return true, 0
 }
 
 // 取得周期热点列表
 func (r *RateLimiter) GetTryMap() []int64 {
 	var out = make([]int64, r.DuCount)
-	for i, v := range r.tryTimesMap {
+	for i, v := range r.TryTimesMap {
 		out[i] = v
 	}
 	return out
