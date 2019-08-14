@@ -1,9 +1,9 @@
-package gologger
+package log
 
 import (
 	"errors"
 	"fmt"
-	"github.com/exwallet/go-common/gologger/utils"
+	"github.com/exwallet/go-common/log/utils"
 	"reflect"
 	"strconv"
 )

@@ -17,7 +17,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/exwallet/go-common/database/mysql"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/util/strutil"
 	"reflect"
 	"strconv"
@@ -77,7 +77,7 @@ func execute(txs map[string]*sql.Tx, sqls []*mysql.OneSql) (success bool) {
 		if err := recover(); err != nil {
 			rollback(txs)
 			success = false
-			gologger.Error("捕获到panic抛回异常并回滚事务，异常信息：%v", err)
+			log.Error("捕获到panic抛回异常并回滚事务，异常信息：%v", err)
 			return
 		}
 	}()
@@ -90,13 +90,13 @@ func execute(txs map[string]*sql.Tx, sqls []*mysql.OneSql) (success bool) {
 			db := mysql.GetConnection(sql.DatabaseKey)
 			// 没有连接源
 			if db == nil {
-				gologger.Error("databaseKey(%s)，找不到数据源，导致事务回滚", sql.DatabaseKey)
+				log.Error("databaseKey(%s)，找不到数据源，导致事务回滚", sql.DatabaseKey)
 				rollback(txs)
 				return
 			}
 			newTx, err := db.Begin()
 			if err != nil {
-				gologger.Error("databaseKey(%s)，事务开启失败，导致事务回滚", sql.DatabaseKey)
+				log.Error("databaseKey(%s)，事务开启失败，导致事务回滚", sql.DatabaseKey)
 				rollback(txs)
 				return
 			}
@@ -106,30 +106,30 @@ func execute(txs map[string]*sql.Tx, sqls []*mysql.OneSql) (success bool) {
 		// Prepare
 		stmt, err := myTx.Prepare(sql.Sql)
 		if err != nil {
-			gologger.Error("execute tx.Prepare(): databaseKey(%s)，%s，%v，导致事务回滚", sql.DatabaseKey, sql.Sql, sql.Params)
-			gologger.Error("error: %s", err.Error())
+			log.Error("execute tx.Prepare(): databaseKey(%s)，%s，%v，导致事务回滚", sql.DatabaseKey, sql.Sql, sql.Params)
+			log.Error("error: %s", err.Error())
 			rollback(txs)
 			return
 		}
 		// execute
 		res, err := stmt.Exec(sql.Params...)
 		if err != nil {
-			gologger.Error("execute stmt.Exec(): databaseKey(%s)，%s，%v，导致事务回滚\n", sql.DatabaseKey, sql.Sql, sql.Params)
-			gologger.Error("error: %s", err.Error())
+			log.Error("execute stmt.Exec(): databaseKey(%s)，%s，%v，导致事务回滚\n", sql.DatabaseKey, sql.Sql, sql.Params)
+			log.Error("error: %s", err.Error())
 			rollback(txs)
 			return
 		}
 		// RowsAffected
 		num, err := res.RowsAffected()
 		if err != nil {
-			gologger.Error("execute res.RowsAffected(): databaseKey(%s)，%s，%v，导致事务回滚", sql.DatabaseKey, sql.Sql, sql.Params)
-			gologger.Error("error: %s", err.Error())
+			log.Error("execute res.RowsAffected(): databaseKey(%s)，%s，%v，导致事务回滚", sql.DatabaseKey, sql.Sql, sql.Params)
+			log.Error("error: %s", err.Error())
 			rollback(txs)
 			return
 		}
 		// judgement
 		if !sql.FutureEfRows(int(num)) {
-			gologger.Error("execute sql.FutureEfRows(): databaseKey(%s)，%s，%v，与预期行数不一，预期影响：%d行，实际影响：%d行，导致事务回滚\n", sql.DatabaseKey, sql.Sql, sql.Params, sql.EfRows, num)
+			log.Error("execute sql.FutureEfRows(): databaseKey(%s)，%s，%v，与预期行数不一，预期影响：%d行，实际影响：%d行，导致事务回滚\n", sql.DatabaseKey, sql.Sql, sql.Params, sql.EfRows, num)
 			rollback(txs)
 			return
 		}
@@ -145,7 +145,7 @@ func rollback(txs map[string]*sql.Tx) {
 	for k, v := range txs {
 		err := v.Rollback()
 		if err != nil {
-			gologger.Error("execute tx.rollback(): databaseKey(%s)，事务回滚失败了，有可能导致数据不同步\n", k)
+			log.Error("execute tx.rollback(): databaseKey(%s)，事务回滚失败了，有可能导致数据不同步\n", k)
 			// rollback(txs)
 			return
 		}
@@ -208,8 +208,8 @@ func makeUpdateSql(v interface{}, databaseKey string, pk ...string) (sql *mysql.
 	results.WriteString(" where " + pkName + "=?")
 	params = append(params, pkVal)
 	//
-	gologger.Debug("--> sql: %s \n--> params: %q\n", results.String(), params)
-	gologger.Debug("--> params个数 :%d\n", len(params))
+	log.Debug("--> sql: %s \n--> params: %q\n", results.String(), params)
+	log.Debug("--> params个数 :%d\n", len(params))
 	sql = &mysql.OneSql{results.String(), 1, params, databaseKey}
 	return
 }

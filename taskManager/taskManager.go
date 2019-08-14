@@ -7,7 +7,7 @@ package taskManager
 
 import (
 	"github.com/emirpasic/gods/lists/arraylist"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"os"
 	"sync"
 	"time"
@@ -19,7 +19,6 @@ import (
 var (
 	signalInterrupt = make(chan os.Signal, 1)
 	waitSegment     = time.Millisecond * 500
-	log             = gologger.GetLogger()
 )
 
 type TaskManager struct {

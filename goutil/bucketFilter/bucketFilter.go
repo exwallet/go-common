@@ -9,7 +9,7 @@ package bucketFilter
 import (
 	"errors"
 	"github.com/exwallet/go-common/cache/redis"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/goutil/gotime"
 )
 
@@ -17,7 +17,6 @@ import (
 基于时间窗口的频率限制器, 最小单位秒
 */
 
-var log = gologger.GetLogger()
 
 // 过滤桶,限制发送动作
 type BucketFilter struct {
@@ -97,8 +96,8 @@ func (b *BucketFilter) getTimeWindow(now int64, key string) ([]int64, error) {
 	}
 	// 如果窗口最早的时间点在统计时间范围内, 直接返回
 	if now-tw.D[0] < b.PeriodSeconds {
-		gologger.Debug("------> 当前时间 %d\n", gotime.UnixNow())
-		gologger.Debug("------> 返回原时间窗口 %+v\n", tw.D)
+		log.Debug("------> 当前时间 %d\n", gotime.UnixNow())
+		log.Debug("------> 返回原时间窗口 %+v\n", tw.D)
 		return tw.D, nil
 	}
 	// 重新组装窗口
@@ -108,8 +107,8 @@ func (b *BucketFilter) getTimeWindow(now int64, key string) ([]int64, error) {
 			newTw = append(newTw, t)
 		}
 	}
-	gologger.Debug("------> 当前时间 %d\n", gotime.UnixNow())
-	gologger.Debug("------> 重装时间窗口 %+v\n", newTw)
+	log.Debug("------> 当前时间 %d\n", gotime.UnixNow())
+	log.Debug("------> 重装时间窗口 %+v\n", newTw)
 	return newTw, nil
 }
 

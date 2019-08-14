@@ -9,7 +9,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/util/configuration/json"
 	_ "github.com/go-sql-driver/mysql"
 	"sync"
@@ -58,8 +58,8 @@ func InitDataSources(filepath string) {
 	arr := make([]JSONConfig, 0, 8)
 	err := json.Unmarshal([]byte(str), &arr)
 	if err != nil {
-		gologger.Debug("无法解析的数据库配置文件：%s\n", str)
-		gologger.Debug("错误原因为：%v\n", err)
+		log.Debug("无法解析的数据库配置文件：%s\n", str)
+		log.Debug("错误原因为：%v\n", err)
 		// 错误的配置文件
 		panic(err)
 	}
@@ -93,7 +93,7 @@ func openConnection(jsonConfig *JSONConfig) *sql.DB {
 	url := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8&allowOldPasswords=1", jsonConfig.User, jsonConfig.Pwd, jsonConfig.Ip, jsonConfig.Db)
 	db, err := sql.Open("mysql", url)
 	if err != nil {
-		gologger.Error("连接mysql失败，databaseKey: %v，原因:%v\n", jsonConfig.Key, err)
+		log.Error("连接mysql失败，databaseKey: %v，原因:%v\n", jsonConfig.Key, err)
 		return nil
 	}
 	// 设置连接池最大链接数--不能大于数据库设置的最大链接数
@@ -104,7 +104,7 @@ func openConnection(jsonConfig *JSONConfig) *sql.DB {
 	db.SetConnMaxLifetime(time.Duration(jsonConfig.ConnMaxLifetime) * time.Minute)
 	// 保存当前数据库连接
 	mysqlConfig.dataSources[jsonConfig.Key] = db
-	gologger.Info("mysql配置信息为:%+v\n", *jsonConfig)
+	log.Info("mysql配置信息为:%+v\n", *jsonConfig)
 	return db
 }
 
@@ -119,9 +119,9 @@ func Close() {
 		}
 		if err := db.Close(); err == nil {
 			delete(mysqlConfig.dataSources, k)
-			gologger.Error("关闭mysql连接成功：%v\n", k)
+			log.Error("关闭mysql连接成功：%v\n", k)
 		} else {
-			gologger.Error("关闭mysql连接失败：%v\n", err)
+			log.Error("关闭mysql连接失败：%v\n", err)
 		}
 	}
 }

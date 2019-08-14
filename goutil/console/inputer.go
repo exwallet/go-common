@@ -6,7 +6,7 @@
 package console
 
 import (
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/goutil/gostring"
 )
 
@@ -22,18 +22,18 @@ func InputPassword(prompt string, isConfirm bool, minLen int) (string, error) {
 		// 等待用户输入密码
 		password, err = Stdin.PromptPassword(prompt)
 		if err != nil {
-			gologger.Error("unexpected error: %v\n", err)
+			log.Error("unexpected error: %v\n", err)
 			return "", err
 		}
 		if len(password) < minLen {
-			gologger.Error("The length of the password is less than %d chars. Please re-enter it.\n", minLen)
+			log.Error("The length of the password is less than %d chars. Please re-enter it.\n", minLen)
 			continue
 		}
 		// 二次确认密码
 		if isConfirm {
 			confirm, err = Stdin.PromptPassword("Confirm wallet password: ")
 			if password != confirm {
-				gologger.Error("The two password is not equal, please rre-enter it.\n")
+				log.Error("The two password is not equal, please rre-enter it.\n")
 				continue
 			}
 		}
@@ -51,11 +51,11 @@ func InputString(prompt string, required bool) (string, error) {
 		// 等待用户输入
 		text, err = Stdin.PromptInput(prompt)
 		if err != nil {
-			gologger.Error("unexpected error: %v\n", err)
+			log.Error("unexpected error: %v\n", err)
 			return "", err
 		}
 		if len(text) == 0 && required {
-			gologger.Error("Input can not be empty!\n")
+			log.Error("Input can not be empty!\n")
 			continue
 		}
 		break
@@ -72,16 +72,16 @@ func InputUint64(prompt string, isReal bool) (uint64, error) {
 		// 等待用户输入参数
 		line, err := Stdin.PromptInput(prompt)
 		if err != nil {
-			gologger.Error("unexpected error: %v\n", err)
+			log.Error("unexpected error: %v\n", err)
 			return 0, err
 		}
 		num, ok = gostring.NewString(line).UInt64()
 		if !ok {
-			gologger.Error("Input can not be empty, and must be greater than 0.\n")
+			log.Error("Input can not be empty, and must be greater than 0.\n")
 			continue
 		}
 		if isReal && num <= 0 {
-			gologger.Error("Input can not be empty, and must be greater than 0.\n")
+			log.Error("Input can not be empty, and must be greater than 0.\n")
 			continue
 		}
 		break
@@ -98,12 +98,12 @@ func InputFloat64(prompt string, isReal bool) (float64, error) {
 		// 等待用户输入参数
 		line, err := Stdin.PromptInput(prompt)
 		if err != nil {
-			gologger.Error("unexpected error: %v\n", err)
+			log.Error("unexpected error: %v\n", err)
 			return 0, err
 		}
 		num, ok = gostring.NewString(line).Float64()
 		if !ok || (isReal && num <= 0) {
-			gologger.Error("Input can not be empty, and must be greater than 0.\n")
+			log.Error("Input can not be empty, and must be greater than 0.\n")
 			continue
 		}
 		break
@@ -120,12 +120,12 @@ func InputInt64(prompt string, isReal bool) (int64, error) {
 		// 等待用户输入参数
 		line, err := Stdin.PromptInput(prompt)
 		if err != nil {
-			gologger.Error("unexpected error: %v\n", err)
+			log.Error("unexpected error: %v\n", err)
 			return 0, err
 		}
 		num, ok = gostring.NewString(line).Int64()
 		if !ok || (isReal && num <= 0) {
-			gologger.Error("Input can not be empty, and must be greater than or equal to 0.\n")
+			log.Error("Input can not be empty, and must be greater than or equal to 0.\n")
 			continue
 		}
 		break

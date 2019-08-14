@@ -2,7 +2,7 @@ package configuration
 
 import (
 	"encoding/json"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/util/configuration/json"
 	"time"
 )
@@ -33,10 +33,10 @@ func InitDataSources(filePath string) *JSONConfig {
 	redisConfig := new(JSONConfig)
 	err := json.Unmarshal([]byte(str), redisConfig)
 	if err != nil {
-		gologger.Error("无法解析的数据库配置文件：%s\n", str)
-		gologger.Error("错误原因为：%v\n", err)
+		log.Error("无法解析的数据库配置文件：%s\n", str)
+		log.Error("错误原因为：%v\n", err)
 		return nil
 	}
-	gologger.Debug("%+v\n", *redisConfig)
+	log.Debug("%+v\n", *redisConfig)
 	return redisConfig
 }

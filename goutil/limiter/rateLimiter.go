@@ -30,8 +30,7 @@ type RateLimiter struct {
 	activeDuMaxTryTimes int64           //
 	lastPeriodTime      int64           // 最新周期时间点
 	hasPunish           bool            //
-	//
-	lock sync.Mutex //
+	lock                sync.Mutex      //
 }
 
 type durationCore struct {
@@ -40,8 +39,8 @@ type durationCore struct {
 }
 
 // durationMaxFailTimes <= 0 不惩罚
-func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor... float64) *RateLimiter {
-	if durationUnitSec <= 0 || durationCount <=0 || durationMaxTryTime <= 0 {
+func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor ...float64) *RateLimiter {
+	if durationUnitSec <= 0 || durationCount <= 0 || durationMaxTryTime <= 0 {
 		panic("RateLimiter非法参数")
 	}
 
@@ -58,7 +57,7 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		hasPunish:           false,
 		lock:                sync.Mutex{},
 	}
-	if len(punishFactor) > 0{
+	if len(punishFactor) > 0 {
 		if punishFactor[0] < 0 || punishFactor[0] >= 1 {
 			panic("RateLimiter 惩罚因子非法定义")
 		}
@@ -93,7 +92,6 @@ func (r *RateLimiter) doPunish() {
 	}
 	r.hasPunish = true
 }
-
 
 // 不通过返回等待恢复时间, 秒
 func (r *RateLimiter) Pass() (pass bool, coolSec int64) {

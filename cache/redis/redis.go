@@ -19,7 +19,7 @@ import (
 	"github.com/exwallet/go-common/cache/redis/cluster"
 	"github.com/exwallet/go-common/cache/redis/configuration"
 	"github.com/exwallet/go-common/cache/redis/singleton"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/util/strutil"
 	"reflect"
 	"strconv"
@@ -68,12 +68,12 @@ func Close() {
 func Exists(k string) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.Exists().panic()：%v\n", err)
+			log.Error("redis.Exists().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("EXISTS", k)
 	if err != nil {
-		gologger.Error("redis.Exists()出错了：%v\n", err)
+		log.Error("redis.Exists()出错了：%v\n", err)
 		return false
 	}
 	if reply.(int64) > 0 {
@@ -86,12 +86,12 @@ func Exists(k string) bool {
 func Get(k string) (string, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.Get().panic()：%v\n", err)
+			log.Error("redis.Get().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("GET", k)
 	if err != nil {
-		gologger.Error("redis.Get()出错了：%v\n", err)
+		log.Error("redis.Get()出错了：%v\n", err)
 		return "", err
 	}
 	if reply == nil {
@@ -107,7 +107,7 @@ func Set(k string, v string) bool {
 func SetAndExpire(k string, v string, seconds int) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.SetAndExpire().panic()：%v\n", err)
+			log.Error("redis.SetAndExpire().panic()：%v\n", err)
 		}
 	}()
 	doFuc := func(k string, v string, seconds int) (interface{}, error) {
@@ -119,7 +119,7 @@ func SetAndExpire(k string, v string, seconds int) bool {
 	}
 	reply, err := doFuc(k, v, seconds)
 	if err != nil {
-		gologger.Error("redis.Set()出错了：%v\n", err)
+		log.Error("redis.Set()出错了：%v\n", err)
 		return false
 	}
 	if reply == "OK" {
@@ -186,7 +186,7 @@ func GetObj(k string, instance interface{}) (ret interface{}, err error) {
 func GetList(k string, instance interface{}) *arraylist.List {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.GetList().panic()：%v\n", err)
+			log.Error("redis.GetList().panic()：%v\n", err)
 		}
 	}()
 	str, _ := Get(k)
@@ -198,7 +198,7 @@ func GetList(k string, instance interface{}) *arraylist.List {
 	elements := reflect.New(instanceType).Interface()
 	err := json.Unmarshal([]byte(str), elements)
 	if err != nil {
-		gologger.Error(err.Error())
+		log.Error(err.Error())
 		return nil
 	}
 	//
@@ -217,12 +217,12 @@ func GetList(k string, instance interface{}) *arraylist.List {
 func Delete(k string) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.Delete().panic()：%v\n", err)
+			log.Error("redis.Delete().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("DEL", k)
 	if err != nil {
-		gologger.Error("redis.Delete()出错了：%v\n", err)
+		log.Error("redis.Delete()出错了：%v\n", err)
 		return false
 	}
 	if reply.(int64) > 0 {
@@ -234,12 +234,12 @@ func Delete(k string) bool {
 func IncrBy(k string) int {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.IncrBy().panic()：%v\n", err)
+			log.Error("redis.IncrBy().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("INCRBY", k, 1)
 	if err != nil {
-		gologger.Error("redis.IncrBy()出错了：%v\n", err)
+		log.Error("redis.IncrBy()出错了：%v\n", err)
 		return -1
 	}
 	v, err := strconv.Atoi(strutil.GetString(reply))
@@ -249,7 +249,7 @@ func IncrBy(k string) int {
 func LPush(k string, seconds int, datas ...interface{}) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.LPush().panic()：%v\n", err)
+			log.Error("redis.LPush().panic()：%v\n", err)
 		}
 	}()
 	doFuc := func(k string, datas []interface{}) []interface{} {
@@ -271,7 +271,7 @@ func LPush(k string, seconds int, datas ...interface{}) bool {
 	p := doFuc(k, datas)
 	reply, err := redisService.Do("LPush", p...)
 	if err != nil {
-		gologger.Error("redis.LPush()出错了：%v\n", err)
+		log.Error("redis.LPush()出错了：%v\n", err)
 		return false
 	}
 	if seconds >= 0 {
@@ -286,12 +286,12 @@ func LPush(k string, seconds int, datas ...interface{}) bool {
 func LRange(k string, start int, end int, instance interface{}) *arraylist.List {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.LRange().panic()：%v\n", err)
+			log.Error("redis.LRange().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("LRANGE", k, start, end)
 	if err != nil {
-		gologger.Error("redis.LRANGE()出错了：%v\n", err)
+		log.Error("redis.LRANGE()出错了：%v\n", err)
 		return nil
 	}
 	arr := reply.([]interface{})
@@ -315,7 +315,7 @@ func LRange(k string, start int, end int, instance interface{}) *arraylist.List 
 func LSet(k string, index int, v interface{}, seconds int) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.LSet().panic()：%v\n", err)
+			log.Error("redis.LSet().panic()：%v\n", err)
 		}
 	}()
 	p := v
@@ -329,7 +329,7 @@ func LSet(k string, index int, v interface{}, seconds int) bool {
 	}
 	reply, err := redisService.Do("LSET", k, index, p)
 	if err != nil {
-		gologger.Error("redis.LSET()出错了：%v\n", err)
+		log.Error("redis.LSET()出错了：%v\n", err)
 		return false
 	}
 	if seconds >= 0 {
@@ -344,12 +344,12 @@ func LSet(k string, index int, v interface{}, seconds int) bool {
 func RPop(k string, instance interface{}) interface{} {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.RPop().panic()：%v\n", err)
+			log.Error("redis.RPop().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("RPOP", k)
 	if err != nil {
-		gologger.Error("redis.RPop()出错了：%v\n", err)
+		log.Error("redis.RPop()出错了：%v\n", err)
 		return nil
 	}
 	str := strutil.GetString(reply)
@@ -368,12 +368,12 @@ func RPop(k string, instance interface{}) interface{} {
 func LLength(k string) int {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.LLength().panic()：%v\n", err)
+			log.Error("redis.LLength().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("LLEN", k)
 	if err != nil {
-		gologger.Error("redis.LLength()出错了：%v\n", err)
+		log.Error("redis.LLength()出错了：%v\n", err)
 		return -1
 	}
 	v, err := strconv.Atoi(strutil.GetString(reply))
@@ -383,7 +383,7 @@ func LLength(k string) int {
 func HSet(k string, itemKey string, v interface{}, seconds int) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.HSet().panic()：%v\n", err)
+			log.Error("redis.HSet().panic()：%v\n", err)
 		}
 	}()
 	p := v
@@ -397,7 +397,7 @@ func HSet(k string, itemKey string, v interface{}, seconds int) bool {
 	}
 	_, err := redisService.Do("HSET", k, itemKey, p)
 	if err != nil {
-		gologger.Error("redis.HSet()出错了：%v\n", err)
+		log.Error("redis.HSet()出错了：%v\n", err)
 		return false
 	}
 	if seconds >= 0 {
@@ -409,12 +409,12 @@ func HSet(k string, itemKey string, v interface{}, seconds int) bool {
 func HGet(k string, itemKey string, instance interface{}) interface{} {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.HGet().panic()：%v\n", err)
+			log.Error("redis.HGet().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("HGET", k, itemKey)
 	if err != nil {
-		gologger.Error("redis.HGet()出错了：%v\n", err)
+		log.Error("redis.HGet()出错了：%v\n", err)
 		return nil
 	}
 	str := strutil.GetString(reply)
@@ -433,12 +433,12 @@ func HGet(k string, itemKey string, instance interface{}) interface{} {
 func HDelete(k string, itemKey string) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.HDelete().panic()：%v\n", err)
+			log.Error("redis.HDelete().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("HDEL", k, itemKey)
 	if err != nil {
-		gologger.Error("redis.HDelete()出错了：%v\n", err)
+		log.Error("redis.HDelete()出错了：%v\n", err)
 		return false
 	}
 	if reply.(int64) > 0 {
@@ -450,12 +450,12 @@ func HDelete(k string, itemKey string) bool {
 func HExists(k string, itemKey string) bool {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.HExists().panic()：%v\n", err)
+			log.Error("redis.HExists().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("HEXISTS", k, itemKey)
 	if err != nil {
-		gologger.Error("redis.HExists()出错了：%v\n", err)
+		log.Error("redis.HExists()出错了：%v\n", err)
 		return false
 	}
 	if reply.(int64) > 0 {
@@ -467,12 +467,12 @@ func HExists(k string, itemKey string) bool {
 func HGetAll(k string, instance interface{}) map[string]interface{} {
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("redis.HGetAll().panic()：%v\n", err)
+			log.Error("redis.HGetAll().panic()：%v\n", err)
 		}
 	}()
 	reply, err := redisService.Do("HGETALL", k)
 	if err != nil {
-		gologger.Error("redis.HGetAll()出错了：%v\n", err)
+		log.Error("redis.HGetAll()出错了：%v\n", err)
 		return nil
 	}
 	results := make(map[string]interface{})

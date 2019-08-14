@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/exwallet/go-common/database/mysql"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/exwallet/go-common/util/strutil"
 	"strings"
 )
@@ -126,7 +126,7 @@ func (d *Dao) Count(queryPrepareSql string, params ...interface{}) int64 {
 	//return Count(d.DatabaseKey, queryPrepareSql, params...)
 	db := mysql.GetConnection(d.DatabaseKey)
 	if db == nil {
-		gologger.Error("cannot found out datasource, database(%s)", d.DatabaseKey)
+		log.Error("cannot found out datasource, database(%s)", d.DatabaseKey)
 		return -1
 	}
 	if strings.Contains(strings.ToLower(queryPrepareSql), "group by") {
@@ -137,7 +137,7 @@ func (d *Dao) Count(queryPrepareSql string, params ...interface{}) int64 {
 	var count int64
 	row := db.QueryRow(queryPrepareSql, params...)
 	if row == nil {
-		gologger.Error("Count.db.QueryRow()出错了()")
+		log.Error("Count.db.QueryRow()出错了()")
 		return 0
 	}
 	row.Scan(&count)
@@ -238,7 +238,7 @@ func (d *Dao) DoTrans(sqls []*mysql.OneSql) (success bool) {
 	// sqls 不能有nil
 	for _, s := range sqls {
 		if s == nil {
-			gologger.Error("事务中包含nil, 导致事务回滚")
+			log.Error("事务中包含nil, 导致事务回滚")
 			return false
 		}
 	}
@@ -255,7 +255,7 @@ func (d *Dao) DoTrans(sqls []*mysql.OneSql) (success bool) {
 	for k, v := range txs {
 		err := v.Commit()
 		if err != nil {
-			gologger.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
+			log.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
 			rollback(txs)
 			return
 		}
@@ -285,7 +285,7 @@ func (d *Dao) DoTransWithOtherService(sqls []*mysql.OneSql, callWithMysqlTx Call
 	for k, v := range txs {
 		err := v.Commit()
 		if err != nil {
-			gologger.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
+			log.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
 			rollback(txs)
 			return
 		}

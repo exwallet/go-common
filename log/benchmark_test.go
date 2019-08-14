@@ -1,4 +1,4 @@
-package gologger
+package log
 
 import (
 	"testing"

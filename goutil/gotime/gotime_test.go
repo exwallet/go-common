@@ -6,12 +6,12 @@
 package gotime
 
 import (
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"testing"
 )
 
 func Test_MillSecStrCST8(t *testing.T){
 	now := UnixNowMillSec()
 	s := MillSecStrCST8(now)
-	gologger.Info(s)
+	log.Info(s)
 }

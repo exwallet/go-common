@@ -7,7 +7,7 @@ package singleton
 import (
 	"fmt"
 	"github.com/exwallet/go-common/cache/redis/configuration"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"github.com/gomodule/redigo/redis"
 	"strconv"
 	"sync"
@@ -29,8 +29,8 @@ func (r *RedisSingleton) InitRedis() {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("无法建立redis连接池，配置信息为:%+v\n", *r.RedisConfig)
-			gologger.Error("错误信息为：%v\n", err)
+			log.Error("无法建立redis连接池，配置信息为:%+v\n", *r.RedisConfig)
+			log.Error("错误信息为：%v\n", err)
 		}
 	}()
 	// redis pool
@@ -64,7 +64,7 @@ func (r *RedisSingleton) borrowResource() redis.Conn {
 
 func (r *RedisSingleton) returnResource(rc redis.Conn) {
 	if err := rc.Close(); err != nil {
-		gologger.Error("释放Redis连接出错了\n")
+		log.Error("释放Redis连接出错了\n")
 	}
 }
 
@@ -72,7 +72,7 @@ func (r *RedisSingleton) Do(commandName string, args ...interface{}) (interface{
 	rc := r.borrowResource()
 	//Err returns a non-nil value when the connection is not usable.
 	if err := rc.Err(); err != nil {
-		gologger.Error("redis borrowResource is not usable：%v\n", err)
+		log.Error("redis borrowResource is not usable：%v\n", err)
 		return nil, err
 	}
 	defer r.returnResource(rc)

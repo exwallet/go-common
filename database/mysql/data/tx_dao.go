@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/exwallet/go-common/database/mysql"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"strings"
 )
 
@@ -63,19 +63,19 @@ func (dao *TxDao) Query(tx *sql.Tx, queryPrepareSql string, instance interface{}
 	stmt, err := tx.Prepare(queryPrepareSql)
 	defer stmt.Close()
 	if err != nil {
-		gologger.Error("Query.db.Prepare()出错了：%v\n", err)
+		log.Error("Query.db.Prepare()出错了：%v\n", err)
 		return nil
 	}
 	rows, err := stmt.Query(params...)
 	defer rows.Close()
 	if err != nil {
-		gologger.Error("Query.stmt.Query()出错了：%v\n", err)
+		log.Error("Query.stmt.Query()出错了：%v\n", err)
 		return nil
 	}
 	// 获取列名
 	columns, err := rows.Columns()
 	if err != nil {
-		gologger.Error("Query.rows.Columns()出错了：%v\n", err)
+		log.Error("Query.rows.Columns()出错了：%v\n", err)
 	}
 	//
 	values := make([]sql.RawBytes, len(columns))
@@ -123,17 +123,17 @@ func (dao *TxDao) Insert(tx *sql.Tx, oneSql *mysql.OneSql) (int64, bool) {
 	stmt, err := tx.Prepare(oneSql.Sql)
 	defer stmt.Close()
 	if err != nil {
-		gologger.Error("Insert.db.Prepare()出错了：%v\n", err)
+		log.Error("Insert.db.Prepare()出错了：%v\n", err)
 		return 0, false
 	}
 	res, err := stmt.Exec(oneSql.Params...)
 	if err != nil {
-		gologger.Error("Insert.stmt.Exec()出错了：%v\n", err)
+		log.Error("Insert.stmt.Exec()出错了：%v\n", err)
 		return 0, false
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		gologger.Error("Insert.LastInsertId()出错了：%v\n", err)
+		log.Error("Insert.LastInsertId()出错了：%v\n", err)
 		return 0, false
 	}
 	return id, true
@@ -147,17 +147,17 @@ func (dao *TxDao) Update(tx *sql.Tx, updatePrepareSql string, params ...interfac
 	stmt, err := tx.Prepare(updatePrepareSql)
 	defer stmt.Close()
 	if err != nil {
-		gologger.Error("Update.db.Prepare()出错了：%v\n", err)
+		log.Error("Update.db.Prepare()出错了：%v\n", err)
 		return 0, false
 	}
 	res, err := stmt.Exec(params...)
 	if err != nil {
-		gologger.Error("Update.stmt.Exec()出错了：%v\n", err)
+		log.Error("Update.stmt.Exec()出错了：%v\n", err)
 		return 0, false
 	}
 	num, err := res.RowsAffected()
 	if err != nil {
-		gologger.Error("Update.RowsAffected()出错了：%v\n", err)
+		log.Error("Update.RowsAffected()出错了：%v\n", err)
 		return 0, false
 	}
 	if num <= 0 {
@@ -202,7 +202,7 @@ func (dao *TxDao) Rollback(msg ...string) {
 	if msg != nil || len(msg) > 0 {
 		s = msg[0]
 	}
-	gologger.Error("sql发生回滚, 回滚信息:%s \n", s)
+	log.Error("sql发生回滚, 回滚信息:%s \n", s)
 	rollback(dao.txs)
 }
 
@@ -210,7 +210,7 @@ func (dao *TxDao) Commit() bool {
 	for k, v := range dao.txs {
 		err := v.Commit()
 		if err != nil {
-			gologger.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
+			log.Error("excute tx.Commit(): databaseKey(%s)，事物提交失败，导致事务回滚\n", k)
 			return false
 		}
 	}

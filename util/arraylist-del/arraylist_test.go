@@ -1,7 +1,7 @@
 package arraylist_del
 
 import (
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"testing"
 )
 
@@ -66,7 +66,7 @@ func Test_arraylist(t *testing.T) {
 	for it.HasNext() {
 		v := it.Next()
 		//list.Set(it.cursor, v)
-		gologger.Error("%T, %v, %p\n", v, v, &v)
+		log.Error("%T, %v, %p\n", v, v, &v)
 	}
 	//it = list.Iterator()
 	//for it.HasNext(){

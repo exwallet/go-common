@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/chasex/redis-go-cluster"
 	"github.com/exwallet/go-common/cache/redis/configuration"
-	"github.com/exwallet/go-common/gologger"
+	"github.com/exwallet/go-common/log"
 	"sync"
 	"time"
 )
@@ -30,8 +30,8 @@ func (r *RedisCluster) InitRedis() {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			gologger.Error("无法建立redis连接池，配置信息为:%+v\n", *r.RedisConfig)
-			gologger.Error("错误信息为：%v\n", err)
+			log.Error("无法建立redis连接池，配置信息为:%+v\n", *r.RedisConfig)
+			log.Error("错误信息为：%v\n", err)
 			r.init = false
 			return
 		}
