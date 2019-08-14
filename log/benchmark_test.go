@@ -19,7 +19,6 @@ func BenchmarkLoggerConsoleText(b *testing.B) {
 func BenchmarkLoggerConsoleAsyncText(b *testing.B) {
 	logger := NewLogger()
 	logger.SetAsync()
-
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

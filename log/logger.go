@@ -59,8 +59,8 @@ func GetLogger() *Logger {
 	return defaultLogger
 }
 
-func SetDefaultLogger(log *Logger) {
-	defaultLogger = log
+func SetDefaultLogger(_log *Logger) {
+	defaultLogger = _log
 }
 
 //new logger
