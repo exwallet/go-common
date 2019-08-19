@@ -50,6 +50,7 @@ var defaultLogger *Logger
 
 //var defaultLoggerMessageFormat = "%millisecond_format% [%level_string%] %body%"
 var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%file%:%line%] %body%"
+var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%file%:%line%] %body%"
 
 func init() {
 	defaultLogger = NewLogger()
@@ -77,7 +78,7 @@ func NewLogger() *Logger {
 	c := &ConsoleConfig{
 		Color:      true,
 		JsonFormat: false,
-		Format:     DefaultMessageFormat,
+		Format:     DefaultMessageSecFormat,
 	}
 	logger.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
 	return logger

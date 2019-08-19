@@ -208,8 +208,8 @@ func makeUpdateSql(v interface{}, databaseKey string, pk ...string) (sql *mysql.
 	results.WriteString(" where " + pkName + "=?")
 	params = append(params, pkVal)
 	//
-	log.Debug("--> sql: %s \n--> params: %q\n", results.String(), params)
-	log.Debug("--> params个数 :%d\n", len(params))
+	//log.Debug("--> sql: %s \n--> params: %q\n", results.String(), params)
+	//log.Debug("--> params个数 :%d\n", len(params))
 	sql = &mysql.OneSql{results.String(), 1, params, databaseKey}
 	return
 }

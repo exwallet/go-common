@@ -19,16 +19,16 @@ import (
 
 */
 type RateLimiter struct {
-	DuCount             int64           // 周期数量
-	DuUnitSec           int64           // 周期时长,微秒
-	DuMaxTryTimes       int64           // 周期内允许尝试次数
-	DuMaxFailTimes      int64           // 周期内允许最大失败次数
-	PunishFactor        float64         // (0<n<1)惩罚倍数因子,失败次数达多少时, 周期变长, 允许次数变小 .
-	TryTimesMap         map[int64]int64 // 周期热点映射表; map[某个周期]次数, TryTimesMap[0]:当前周期内, TryTimesMap[1]:一个周期前
-	ActiveDuUnitSec     int64           //
-	ActiveDuMaxTryTimes int64           //
-	LastPeriodTime      int64           // 最新周期时间点
-	HasPunish           bool            //
+	DuCount             int64           `json:"duCount"`             // 周期数量
+	DuUnitSec           int64           `json:"duUnitSec"`           // 周期时长,微秒
+	DuMaxTryTimes       int64           `json:"duMaxTryTimes"`       // 周期内允许尝试次数
+	DuMaxFailTimes      int64           `json:"duMaxFailTimes"`      // 周期内允许最大失败次数
+	PunishFactor        float64         `json:"punishFactor"`        // (0<n<1)惩罚倍数因子,失败次数达多少时, 周期变长, 允许次数变小 .
+	TryTimesMap         map[int64]int64 `json:"tryTimesMap"`         // 周期热点映射表; map[某个周期]次数, TryTimesMap[0]:当前周期内, TryTimesMap[1]:一个周期前
+	ActiveDuUnitSec     int64           `json:"activeDuUnitSec"`     //
+	ActiveDuMaxTryTimes int64           `json:"activeDuMaxTryTimes"` //
+	LastPeriodTime      int64           `json:"lastPeriodTime"`      // 最新周期时间点
+	HasPunish           bool            `json:"hasPunish"`           //
 }
 
 type durationCore struct {
@@ -67,7 +67,7 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 }
 
 func (r *RateLimiter) rotate(duNum int64) {
-	if duNum > 1 ||  r.TryTimesMap[0] < r.DuMaxFailTimes {
+	if duNum > 1 || r.TryTimesMap[0] < r.DuMaxFailTimes {
 		// 重置
 		r.ActiveDuUnitSec = r.DuUnitSec
 		r.ActiveDuMaxTryTimes = r.DuMaxTryTimes
@@ -79,7 +79,7 @@ func (r *RateLimiter) rotate(duNum int64) {
 			r.TryTimesMap[i] = r.TryTimesMap[i-1]
 		}
 		r.TryTimesMap[0] = 0
-		duNum --
+		duNum--
 	}
 }
 

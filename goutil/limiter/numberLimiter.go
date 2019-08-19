@@ -14,15 +14,15 @@ import (
 */
 
 type NumberLimiter struct {
-	DuUnitSec int64           // 周期时间,秒
-	DuNum     int64           // 周期保存数量
-	DuMaxNum  int64           // 周期时间内最大数量
-	NumMap    map[int64]int64 // 数量保存器
-	LastTime  int64           // 最后周期时间点
+	DuUnitSec int64           `json:"duUnitSec"` // 周期时间,秒
+	DuNum     int64           `json:"duNum"`     // 周期保存数量
+	DuMaxNum  int64           `json:"duMaxNum"`  // 周期时间内最大数量
+	NumMap    map[int64]int64 `json:"numMap"`    // 数量保存器
+	LastTime  int64           `json:"lastTime"`  // 最后周期时间点
 }
 
 func NewNumberLimiter(duUnitSec int64, duNum int64, duMaxNum int64) *NumberLimiter {
-	if duUnitSec <=0 || duNum <= 0|| duMaxNum <= 0 {
+	if duUnitSec <= 0 || duNum <= 0 || duMaxNum <= 0 {
 		panic("NumberLimiter非法参数")
 	}
 	a := &NumberLimiter{
@@ -59,7 +59,7 @@ func (l *NumberLimiter) Add(num int64) (succ bool, quotaLeft int64, secLeft int6
 	}
 
 	// 新时间周期, 符合条件
-	l.rotate(tDiff/l.DuUnitSec)
+	l.rotate(tDiff / l.DuUnitSec)
 	l.LastTime = now
 	l.NumMap[0] = num
 	return true, l.DuMaxNum - num, l.DuUnitSec
@@ -83,7 +83,7 @@ func (l *NumberLimiter) rotate(duNum int64) {
 			l.NumMap[i] = l.NumMap[i-1]
 		}
 		l.NumMap[0] = 0
-		duNum --
+		duNum--
 	}
 }
 
