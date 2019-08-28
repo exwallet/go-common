@@ -49,8 +49,8 @@ var levelStringMapping = map[int]string{
 var defaultLogger *Logger
 
 //var defaultLoggerMessageFormat = "%millisecond_format% [%level_string%] %body%"
-var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%file%:%function%:%line%] %body%"
-var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%file%:%function%:%line%] %body%"
+var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%function%:%line%] %body%"
+var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%function%:%line%] %body%"
 
 func init() {
 	defaultLogger = NewLogger()
@@ -130,7 +130,6 @@ type loggerMessage struct {
 func (logger *Logger) Attach(level int, config Config) error {
 	logger.lock.Lock()
 	defer logger.lock.Unlock()
-
 	return logger.attach(config.Name(), level, config)
 }
 
@@ -169,7 +168,6 @@ func (logger *Logger) attach(adapterName string, level int, config Config) error
 func (logger *Logger) Detach(adapterName string) error {
 	logger.lock.Lock()
 	defer logger.lock.Unlock()
-
 	return logger.detach(adapterName)
 }
 
@@ -233,6 +231,9 @@ func (logger *Logger) Writer(level int, msg string) error {
 		line = 0
 	} else {
 		funcName = runtime.FuncForPC(pc).Name()
+		// fix
+		split := strings.Split(funcName, "/")
+		funcName = split[len(split)-1]
 	}
 	_, filename := path.Split(file)
 
