@@ -49,8 +49,8 @@ var levelStringMapping = map[int]string{
 var defaultLogger *Logger
 
 //var defaultLoggerMessageFormat = "%millisecond_format% [%level_string%] %body%"
-var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%file%:%line%] %body%"
-var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%file%:%line%] %body%"
+var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%file%:%function%:%line%] %body%"
+var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%file%:%function%:%line%] %body%"
 
 func init() {
 	defaultLogger = NewLogger()
