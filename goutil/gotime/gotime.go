@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+const (
+	YYYYMMDD = "20060102"
+	YYYY_MM_DD_HH_MM_SS = "2006-01-02 15:04:05"
+
+)
+
 func UnixNow() int64 {
 	return UnixNowSec()
 }
