@@ -18,22 +18,17 @@ import (
 
 
 */
+
 type RateLimiter struct {
-	DuCount             int64           `json:"duCount"`             // 周期数量
-	DuUnitSec           int64           `json:"duUnitSec"`           // 周期时长,微秒
+	DuUnitSec           int64           `json:"duUnitSec"`           // 周期时长
 	DuMaxTryTimes       int64           `json:"duMaxTryTimes"`       // 周期内允许尝试次数
 	DuMaxFailTimes      int64           `json:"duMaxFailTimes"`      // 周期内允许最大失败次数
 	PunishFactor        float64         `json:"punishFactor"`        // (0<n<1)惩罚倍数因子,失败次数达多少时, 周期变长, 允许次数变小 .
-	TryTimesMap         map[int64]int64 `json:"tryTimesMap"`         // 周期热点映射表; map[某个周期]次数, TryTimesMap[0]:当前周期内, TryTimesMap[1]:一个周期前
+	TryTimes            int64           `json:"tryTimes"`            //
 	ActiveDuUnitSec     int64           `json:"activeDuUnitSec"`     //
 	ActiveDuMaxTryTimes int64           `json:"activeDuMaxTryTimes"` //
 	LastPeriodTime      int64           `json:"lastPeriodTime"`      // 最新周期时间点
 	HasPunish           bool            `json:"hasPunish"`           //
-}
-
-type durationCore struct {
-	tryTimes int64
-	punish   bool
 }
 
 // durationMaxFailTimes <= 0 不惩罚
@@ -43,12 +38,11 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 	}
 
 	a := &RateLimiter{
-		DuCount:             durationCount,
 		DuUnitSec:           durationUnitSec,
 		DuMaxTryTimes:       durationMaxTryTime,
 		DuMaxFailTimes:      durationMaxFailTimes,
 		PunishFactor:        0,
-		TryTimesMap:         make(map[int64]int64, durationCount),
+		TryTimes:            0,
 		ActiveDuUnitSec:     durationUnitSec,
 		ActiveDuMaxTryTimes: durationMaxTryTime,
 		LastPeriodTime:      gotime.UnixNowSec(),
@@ -60,27 +54,15 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		}
 		a.PunishFactor = punishFactor[0]
 	}
-	for i := int64(0); i < durationCount; i++ {
-		a.TryTimesMap[i] = 0
-	}
 	return a
 }
 
-func (r *RateLimiter) rotate(duNum int64) {
-	if duNum > 1 || r.TryTimesMap[0] < r.DuMaxFailTimes {
-		// 重置
+func (r *RateLimiter) rotate() {
+	if r.TryTimes < r.DuMaxTryTimes + r.DuMaxFailTimes {
 		r.ActiveDuUnitSec = r.DuUnitSec
 		r.ActiveDuMaxTryTimes = r.DuMaxTryTimes
 	}
 	r.HasPunish = false
-	//
-	for duNum > 0 {
-		for i := r.DuCount - 1; i > 0; i-- {
-			r.TryTimesMap[i] = r.TryTimesMap[i-1]
-		}
-		r.TryTimesMap[0] = 0
-		duNum--
-	}
 }
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
@@ -94,40 +76,34 @@ func (r *RateLimiter) doPunish() {
 }
 
 // 不通过返回等待恢复时间, 秒
-func (r *RateLimiter) Pass() (pass bool, coolSec int64) {
+func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 	now := gotime.UnixNowSec()
 	tsDiff := now - r.LastPeriodTime
 	if tsDiff <= r.ActiveDuUnitSec {
-		r.TryTimesMap[0] += 1
-		t := r.TryTimesMap[0]
-		if t <= r.DuMaxTryTimes {
+		r.TryTimes += 1
+		if r.TryTimes <= r.DuMaxTryTimes {
 			// do pass
 			return true, 0
 		}
 		// do fail
-		if t <= r.DuMaxFailTimes {
+		if r.TryTimes <= r.DuMaxFailTimes {
 			coolSec = r.ActiveDuUnitSec - tsDiff
 			return false, coolSec
-		}
-		// do fail and punish
-		if r.DuMaxFailTimes <= 0 && !r.HasPunish {
+		} else if !r.HasPunish {
 			r.doPunish()
 		}
-		coolSec = r.ActiveDuUnitSec - tsDiff
-		return false, coolSec
+		return false, r.ActiveDuUnitSec - tsDiff
 	}
 	// do pass
-	r.rotate(tsDiff / r.ActiveDuUnitSec)
-	r.TryTimesMap[0] = 1
+	r.rotate()
+	r.TryTimes = 1
 	r.LastPeriodTime = now
 	return true, 0
 }
 
-// 取得周期热点列表
-func (r *RateLimiter) GetTryMap() []int64 {
-	var out = make([]int64, r.DuCount)
-	for i, v := range r.TryTimesMap {
-		out[i] = v
+func (r *RateLimiter) Revoke() {
+	if r.TryTimes > 0 {
+		r.TryTimes -= 1
 	}
-	return out
 }
+

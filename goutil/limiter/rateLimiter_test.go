@@ -12,10 +12,10 @@ import (
 )
 
 func Test_ratelimit(t *testing.T) {
-	r := NewRateLimiter(2, 5, 5, 8, 0.4)
+	r := NewRateLimiter(10, 5, 5, 8, 0.4)
 	for {
-		b, coolSec := r.Pass()
-		log.Info("通过[%v], 冷静:%d 秒,  计数: %v", b, coolSec, r.GetTryMap())
+		b, coolSec := r.Do()
+		log.Info("通过[%v], 冷静:%d 秒,  计数: %v", b, coolSec, r.TryTimes)
 		time.Sleep(time.Millisecond*100)
 	}
 }
