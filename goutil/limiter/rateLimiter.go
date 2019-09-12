@@ -91,7 +91,7 @@ func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 			return true, 0
 		}
 		// do fail
-		if r.TryTimes <= r.DuMaxFailTimes {
+		if r.TryTimes <= r.DuMaxTryTimes + r.DuMaxFailTimes {
 			coolSec = r.ActiveDuUnitSec - tsDiff
 			return false, coolSec
 		} else if !r.HasPunish {
