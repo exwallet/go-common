@@ -81,6 +81,7 @@ func (r *RateLimiter) doPunish() {
 func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 	now := gotime.UnixNowSec()
 	tsDiff := now - r.LastPeriodTime
+	r.LastPeriodTime = now
 	if tsDiff <= r.ActiveDuUnitSec {
 		r.TryTimes += 1
 		if r.TryTimes <= r.DuMaxTryTimes {
@@ -102,7 +103,6 @@ func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 	// do pass
 	r.rotate()
 	r.TryTimes = 1
-	r.LastPeriodTime = now
 	return true, 0
 }
 
