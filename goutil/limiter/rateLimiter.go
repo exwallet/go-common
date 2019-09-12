@@ -33,8 +33,8 @@ type RateLimiter struct {
 }
 
 // durationMaxFailTimes <= 0 不惩罚
-func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, calmIntervalSec int64, punishFactor ...float64) *RateLimiter {
-	if durationUnitSec <= 0 || durationCount <= 0 || durationMaxTryTime <= 0 {
+func NewRateLimiter(durationUnitSec int64, durationMaxTryTime int64, durationMaxFailTimes int64, calmIntervalSec int64, punishFactor ...float64) *RateLimiter {
+	if durationUnitSec <= 0 || durationMaxTryTime <= 0 {
 		panic("RateLimiter非法参数")
 	}
 
@@ -51,9 +51,6 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		HasPunish:           false,
 	}
 	if len(punishFactor) > 0 {
-		if punishFactor[0] < 0 || punishFactor[0] >= 1 {
-			panic("RateLimiter 惩罚因子非法定义")
-		}
 		a.PunishFactor = punishFactor[0]
 	}
 	return a
@@ -69,6 +66,9 @@ func (r *RateLimiter) rotate() {
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
 func (r *RateLimiter) doPunish() {
+	if r.PunishFactor <= 0 {
+		return
+	}
 	r.ActiveDuUnitSec += int64(float64(r.ActiveDuUnitSec) * r.PunishFactor)
 	r.ActiveDuMaxTryTimes -= int64(float64(r.DuMaxTryTimes) * r.PunishFactor)
 	if r.ActiveDuMaxTryTimes <= 0 {
