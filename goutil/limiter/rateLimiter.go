@@ -23,6 +23,7 @@ type RateLimiter struct {
 	DuUnitSec           int64           `json:"duUnitSec"`           // 周期时长
 	DuMaxTryTimes       int64           `json:"duMaxTryTimes"`       // 周期内允许尝试次数
 	DuMaxFailTimes      int64           `json:"duMaxFailTimes"`      // 周期内允许最大失败次数
+	CalmIntervalSec     int64           `json:"calmIntervalSec"`     // 每次调用冷静时间, <=0 不需要冷静
 	PunishFactor        float64         `json:"punishFactor"`        // (0<n<1)惩罚倍数因子,失败次数达多少时, 周期变长, 允许次数变小 .
 	TryTimes            int64           `json:"tryTimes"`            //
 	ActiveDuUnitSec     int64           `json:"activeDuUnitSec"`     //
@@ -32,7 +33,7 @@ type RateLimiter struct {
 }
 
 // durationMaxFailTimes <= 0 不惩罚
-func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, punishFactor ...float64) *RateLimiter {
+func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTime int64, durationMaxFailTimes int64, calmIntervalSec int64, punishFactor ...float64) *RateLimiter {
 	if durationUnitSec <= 0 || durationCount <= 0 || durationMaxTryTime <= 0 {
 		panic("RateLimiter非法参数")
 	}
@@ -41,6 +42,7 @@ func NewRateLimiter(durationUnitSec int64, durationCount int64, durationMaxTryTi
 		DuUnitSec:           durationUnitSec,
 		DuMaxTryTimes:       durationMaxTryTime,
 		DuMaxFailTimes:      durationMaxFailTimes,
+		CalmIntervalSec:     calmIntervalSec,
 		PunishFactor:        0,
 		TryTimes:            0,
 		ActiveDuUnitSec:     durationUnitSec,
@@ -82,7 +84,10 @@ func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 	if tsDiff <= r.ActiveDuUnitSec {
 		r.TryTimes += 1
 		if r.TryTimes <= r.DuMaxTryTimes {
-			// do pass
+			// do pass, but check calm
+			if r.CalmIntervalSec > 0 && tsDiff < r.CalmIntervalSec {
+				return false, r.CalmIntervalSec - tsDiff
+			}
 			return true, 0
 		}
 		// do fail
@@ -102,8 +107,6 @@ func (r *RateLimiter) Do() (pass bool, coolSec int64) {
 }
 
 func (r *RateLimiter) Revoke() {
-	if r.TryTimes > 0 {
-		r.TryTimes -= 1
-	}
+	r.TryTimes -= 1
 }
 
