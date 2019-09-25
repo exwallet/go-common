@@ -104,7 +104,7 @@ func openConnection(jsonConfig *JSONConfig) *sql.DB {
 	db.SetConnMaxLifetime(time.Duration(jsonConfig.ConnMaxLifetime) * time.Minute)
 	// 保存当前数据库连接
 	mysqlConfig.dataSources[jsonConfig.Key] = db
-	log.Info("mysql配置信息为:%+v\n", *jsonConfig)
+	log.Info("mysql配置信息user[%s] db[%s] ip[%s]:%+v\n", jsonConfig.User, jsonConfig.Db, jsonConfig.Ip)
 	return db
 }
 

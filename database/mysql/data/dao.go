@@ -84,8 +84,6 @@ func (d *Dao) Query(queryPrepareSql string, instance interface{}, params ...inte
 	return list, nil
 }
 func (d *Dao) QueryByPage(queryPrepareSql string, pageNo int, pageSize int, instance interface{}, params ...interface{}) (query *arraylist.List, err error) {
-	//logger.Debug("sql : %s", queryPrepareSql)
-	//logger.Debug("sql params:   %d, %+v", len(params), params)
 	if strings.Index(queryPrepareSql, "limit") < 0 {
 		if pageNo < 1 {
 			pageNo = 1
@@ -96,7 +94,8 @@ func (d *Dao) QueryByPage(queryPrepareSql string, pageNo int, pageSize int, inst
 		limit := fmt.Sprintf(" limit %d,%d ", pageSize*(pageNo-1), pageSize)
 		queryPrepareSql += limit
 	}
-	return d.Query(queryPrepareSql, instance, params...)
+	list, err := d.Query(queryPrepareSql, instance, params...)
+	return list, err
 }
 
 func (d *Dao) GetOne(queryPrepareSql string, instance interface{}, params ...interface{}) (one interface{}, err error) {

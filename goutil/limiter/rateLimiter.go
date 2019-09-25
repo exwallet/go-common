@@ -66,6 +66,7 @@ func (r *RateLimiter) rotate() {
 
 // 惩罚机制: 周期时间延时, 周期允许尝试次数缩小
 func (r *RateLimiter) doPunish() {
+	r.HasPunish = true
 	if r.PunishFactor <= 0 {
 		return
 	}
@@ -74,7 +75,7 @@ func (r *RateLimiter) doPunish() {
 	if r.ActiveDuMaxTryTimes <= 0 {
 		r.ActiveDuMaxTryTimes = 1
 	}
-	r.HasPunish = true
+
 }
 
 // 不通过返回等待恢复时间, 秒

@@ -75,12 +75,12 @@ func NewLogger() *Logger {
 		signalChan:  make(chan string, 1),
 	}
 	//default adapter console
-	c := &ConsoleConfig{
-		Color:      true,
-		JsonFormat: false,
-		Format:     DefaultMessageSecFormat,
-	}
-	logger.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
+	//c := &ConsoleConfig{
+	//	Color:      true,
+	//	JsonFormat: false,
+	//	Format:     DefaultMessageSecFormat,
+	//}
+	////logger.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
 	return logger
 }
 
