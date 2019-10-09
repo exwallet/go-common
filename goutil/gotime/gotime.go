@@ -48,7 +48,7 @@ func MillSecStrCST8(millSec int64, format ...string) string {
 	if format != nil && len(format) > 0 {
 		return time.Unix(millSec/1000, 0).In(cstZone).Format(format[0])
 	}
-	return time.Unix(millSec/1000, 0).In(cstZone).Format("2006-01-02 15:04:05【CST8】")
+	return time.Unix(millSec/1000, 0).In(cstZone).Format("2006-01-02 15:04:05")
 }
 
 func Time2StrCST8(t time.Time, format ...string) string {
@@ -56,7 +56,7 @@ func Time2StrCST8(t time.Time, format ...string) string {
 	if format != nil && len(format) > 0 {
 		return t.In(cstZone).Format(format[0])
 	}
-	return t.In(cstZone).Format("2006-01-02 15:04:05【CST8】")
+	return t.In(cstZone).Format("2006-01-02 15:04:05")
 }
 
 func TimeNow2StrCST8(format ...string) string {
@@ -64,6 +64,6 @@ func TimeNow2StrCST8(format ...string) string {
 	if format != nil && len(format) > 0 {
 		return time.Now().In(cstZone).Format(format[0])
 	}
-	return time.Now().In(cstZone).Format("2006-01-02 15:04:05【CST8】")
+	return time.Now().In(cstZone).Format("2006-01-02 15:04:05")
 }
 
