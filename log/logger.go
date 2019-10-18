@@ -47,17 +47,31 @@ var levelStringMapping = map[int]string{
 }
 
 var defaultLogger *Logger
+var loggerList []*Logger
 
-//var defaultLoggerMessageFormat = "%millisecond_format% [%level_string%] %body%"
 var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%function%:%line%] %body%"
 var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%function%:%line%] %body%"
 
 func init() {
+	loggerList = make([]*Logger, 0)
 	defaultLogger = NewLogger()
 }
 
-func GetLogger() *Logger {
-	return defaultLogger
+func ConsoleOutOn() {
+	for _, log := range loggerList {
+		c := &ConsoleConfig{
+			Color:      true,
+			JsonFormat: false,
+			Format:     DefaultMessageSecFormat,
+		}
+		log.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
+	}
+}
+
+func ConsoleOutOff() {
+	for _, log := range loggerList {
+		log.detach(CONSOLE_ADAPTER_NAME)
+	}
 }
 
 func SetDefaultLogger(_log *Logger) {
@@ -65,7 +79,6 @@ func SetDefaultLogger(_log *Logger) {
 }
 
 //new logger
-//return logger
 func NewLogger() *Logger {
 	logger := &Logger{
 		outputs:     []*outputLogger{},
@@ -74,13 +87,7 @@ func NewLogger() *Logger {
 		wait:        sync.WaitGroup{},
 		signalChan:  make(chan string, 1),
 	}
-	//default adapter console
-	c := &ConsoleConfig{
-		Color:      true,
-		JsonFormat: false,
-		Format:     DefaultMessageSecFormat,
-	}
-	logger.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
+	loggerList = append(loggerList, logger)
 	return logger
 }
 
@@ -128,6 +135,10 @@ type loggerMessage struct {
 //param : adapterName console | file | database | ...
 //return : error
 func (logger *Logger) Attach(level int, config Config) error {
+	// 过滤console
+	if config.Name() == CONSOLE_ADAPTER_NAME {
+		return nil
+	}
 	logger.lock.Lock()
 	defer logger.lock.Unlock()
 	return logger.attach(config.Name(), level, config)
@@ -139,17 +150,23 @@ func (logger *Logger) Attach(level int, config Config) error {
 func (logger *Logger) attach(adapterName string, level int, config Config) error {
 	for _, output := range logger.outputs {
 		if output.Name == adapterName {
-			printError("logger: adapter " + adapterName + "already attached!")
+			defaultLogger.Error("logger: adapter " + adapterName + "already attached!")
+			return fmt.Errorf("logger: adapter " + adapterName + "already attached!")
+			//printError("logger: adapter " + adapterName + "already attached!")
 		}
 	}
 	logFun, ok := adapters[adapterName]
 	if !ok {
-		printError("logger: adapter " + adapterName + "is nil!")
+		//printError("logger: adapter " + adapterName + "is nil!")
+		defaultLogger.Error("logger: adapter " + adapterName + "is nil!")
+		return fmt.Errorf("logger: adapter " + adapterName + "is nil!")
 	}
 	adapterLog := logFun()
 	err := adapterLog.Init(config)
 	if err != nil {
-		printError("logger: adapter " + adapterName + " init failed, error: " + err.Error())
+		//printError("logger: adapter " + adapterName + " init failed, error: " + err.Error())
+		defaultLogger.Error("logger: adapter " + adapterName + " init failed, error: " + err.Error())
+		return fmt.Errorf("logger: adapter " + adapterName + " init failed, error: " + err.Error())
 	}
 
 	output := &outputLogger{
@@ -238,7 +255,8 @@ func (logger *Logger) Writer(level int, msg string) error {
 	_, filename := path.Split(file)
 
 	if levelStringMapping[level] == "" {
-		printError("logger: level " + strconv.Itoa(level) + " is illegal!")
+		//printError("logger: level " + strconv.Itoa(level) + " is illegal!")
+		fmt.Sprintln("logger: level " + strconv.Itoa(level) + " is illegal!")
 	}
 
 	loggerMsg := &loggerMessage{
