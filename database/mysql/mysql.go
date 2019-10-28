@@ -53,7 +53,6 @@ func InitDataSources(filepath string) {
 	if len(str) == 0 {
 		return
 	}
-	fmt.Println(str)
 
 	arr := make([]JSONConfig, 0, 8)
 	err := json.Unmarshal([]byte(str), &arr)

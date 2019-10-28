@@ -29,7 +29,6 @@ func InitDataSources(filePath string) *JSONConfig {
 	if len(str) == 0 {
 		return nil
 	}
-	//fmt.Println(str)
 	redisConfig := new(JSONConfig)
 	err := json.Unmarshal([]byte(str), redisConfig)
 	if err != nil {
@@ -37,6 +36,6 @@ func InitDataSources(filePath string) *JSONConfig {
 		log.Error("错误原因为：%v\n", err)
 		return nil
 	}
-	log.Debug("%+v\n", *redisConfig)
+	//log.Debug("%+v\n", *redisConfig)
 	return redisConfig
 }

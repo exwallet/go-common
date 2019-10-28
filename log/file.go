@@ -129,9 +129,11 @@ func (adapterFile *AdapterFile) Init(fileConfig Config) error {
 			return errors.New("config Filename can't be empty!")
 		}
 	}
-	_, ok := fileSliceDateMapping[adapterFile.config.DateSlice]
-	if !ok {
-		return errors.New("config DateSlice must be one of the 'y', 'd', 'm','h'!")
+	if adapterFile.config.DateSlice != "" {
+		_, ok := fileSliceDateMapping[adapterFile.config.DateSlice]
+		if !ok {
+			return errors.New("config DateSlice must be one of the 'y', 'd', 'm','h'!")
+		}
 	}
 
 	// init FileWriter
