@@ -10,17 +10,12 @@ import (
 	"github.com/exwallet/go-common/goutil/gotime"
 )
 
-type GatewayType string
+type MsgType string
 
 const (
-	/*
-	   SMS(0, "短信"),
-	   EMAIL(1, "邮件"),
-	   VOICE(2, "语音"),
-	*/
-	GatewaySMS      GatewayType = "sms"
-	GatewayEmail    GatewayType = "email"
-	GatewaySMSVoice GatewayType = "smsVoice"
+	MsgTypeSMS      MsgType = "sms"
+	MsgTypeEmail    MsgType = "email"
+	MsgTypeSMSVoice MsgType = "smsVoice"
 
 	/*
 		WAITING_FOR_SEND(0, "待发送"),
@@ -35,7 +30,8 @@ const (
 // index key:
 type Message struct {
 	Id          int64  `json:"id" pk:"1"`
-	Gateway     string `json:"gateway"`     // 发送网关类型
+	MsgType     string `json:"msgType"`     // 消息类型
+	Gateway     string `json:"gateway"`     // 发送网关
 	Tos         string `json:"tos"`         // 业务类型
 	UserId      int64  `json:"userId"`      //
 	Username    string `json:"username"`    //
@@ -55,7 +51,8 @@ type Message struct {
 func SendSMS(dao *data.Dao, tos string, userId int64, username string, countryCode string, mobile string, content string, addIP string, isAdmin int64) error {
 	m := &Message{
 		Id:          0,
-		Gateway:     string(GatewaySMS),
+		MsgType:     string(MsgTypeSMS),
+		Gateway:     "",
 		Tos:         tos,
 		UserId:      userId,
 		Username:    username,
@@ -78,7 +75,8 @@ func SendSMS(dao *data.Dao, tos string, userId int64, username string, countryCo
 func SendEmail(dao *data.Dao, tos string, userId int64, username string, to string, title string, content string, addIP string, isAdmin int64) error {
 	m := &Message{
 		Id:          0,
-		Gateway:     string(GatewayEmail),
+		MsgType:     string(MsgTypeEmail),
+		Gateway:     "",
 		Tos:         tos,
 		UserId:      userId,
 		Username:    username,
@@ -101,7 +99,8 @@ func SendEmail(dao *data.Dao, tos string, userId int64, username string, to stri
 func SendSMSVoice(dao *data.Dao, tos string, userId int64, username string, countryCode string, mobile string, content string, addIP string, isAdmin int64) error {
 	m := &Message{
 		Id:          0,
-		Gateway:     string(GatewaySMSVoice),
+		MsgType:     string(MsgTypeSMSVoice),
+		Gateway:     "",
 		Tos:         tos,
 		UserId:      userId,
 		Username:    username,
