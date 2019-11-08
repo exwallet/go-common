@@ -47,7 +47,7 @@ func NewRateLimiter(durationUnitSec int64, durationMaxTryTime int64, durationMax
 		TryTimes:            0,
 		ActiveDuUnitSec:     durationUnitSec,
 		ActiveDuMaxTryTimes: durationMaxTryTime,
-		LastPeriodTime:      gotime.UnixNowSec(),
+		LastPeriodTime:      0,
 		HasPunish:           false,
 	}
 	if len(punishFactor) > 0 {
