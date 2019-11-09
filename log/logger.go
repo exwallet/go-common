@@ -47,32 +47,32 @@ var levelStringMapping = map[int]string{
 }
 
 var defaultLogger *Logger
-var loggerList []*Logger
+//var loggerList []*Logger
 
 var DefaultMessageFormat = "%millisecond_format% [%level_string%] [%function%:%line%] %body%"
 var DefaultMessageSecFormat = "%timestamp_format% [%level_string%] [%function%:%line%] %body%"
 
 func init() {
-	loggerList = make([]*Logger, 0)
+	//loggerList = make([]*Logger, 0)
 	defaultLogger = NewLogger()
 }
 
-func ConsoleOutOn() {
-	for _, log := range loggerList {
-		c := &ConsoleConfig{
-			Color:      true,
-			JsonFormat: false,
-			Format:     DefaultMessageSecFormat,
-		}
-		log.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
-	}
-}
-
-func ConsoleOutOff() {
-	for _, log := range loggerList {
-		log.detach(CONSOLE_ADAPTER_NAME)
-	}
-}
+//func ConsoleOutOn() {
+//	for _, log := range loggerList {
+//		c := &ConsoleConfig{
+//			Color:      true,
+//			JsonFormat: false,
+//			Format:     DefaultMessageSecFormat,
+//		}
+//		log.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
+//	}
+//}
+//
+//func ConsoleOutOff() {
+//	for _, log := range loggerList {
+//		log.detach(CONSOLE_ADAPTER_NAME)
+//	}
+//}
 
 func SetDefaultLogger(_log *Logger) {
 	defaultLogger = _log
@@ -87,7 +87,7 @@ func NewLogger() *Logger {
 		wait:        sync.WaitGroup{},
 		signalChan:  make(chan string, 1),
 	}
-	loggerList = append(loggerList, logger)
+	//loggerList = append(loggerList, logger)
 	return logger
 }
 
@@ -142,6 +142,15 @@ func (logger *Logger) Attach(level int, config Config) error {
 	logger.lock.Lock()
 	defer logger.lock.Unlock()
 	return logger.attach(config.Name(), level, config)
+}
+
+func (logger *Logger) ConsoleOn() {
+	c := &ConsoleConfig{
+		Color:      true,
+		JsonFormat: false,
+		Format:     DefaultMessageSecFormat,
+	}
+	logger.attach(CONSOLE_ADAPTER_NAME, LOGGER_LEVEL_DEBUG, c)
 }
 
 //attach a logger adapter after lock

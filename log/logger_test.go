@@ -17,9 +17,10 @@ func A() {
 		Format:        "",
 	}
 	e := _log.Attach(LOGGER_LEVEL_INFO, fc)
+	_log.ConsoleOn()
+	_log.ConsoleOn()
 	fmt.Printf("err: %+v\n", e)
 	SetDefaultLogger(_log)
-	ConsoleOutOn()
 
 	Debug("debug")
 	Info("info")
