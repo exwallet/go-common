@@ -85,7 +85,7 @@ func (m *SessionManager) _expiredCookie(ctx ContextInf, key string) {
 	ctx.SetCookie(key, "", -1, "/", ctx.GetHeader("Domain"), false, true)
 }
 
-func (m *SessionManager) updateCookies(ctx ContextInf, s *Session) {
+func (m *SessionManager) _updateCookies(ctx ContextInf, s *Session) {
 	m._setCookie(ctx, m.CookieKey.SessionId, s.Sid)
 	m._setCookie(ctx, m.CookieKey.UserId, fmt.Sprintf("%d", s.UserId))
 	m._setCookie(ctx, m.CookieKey.UserStatus, fmt.Sprintf("%d", s.UserStatus))
@@ -94,6 +94,11 @@ func (m *SessionManager) updateCookies(ctx ContextInf, s *Session) {
 }
 
 func (m *SessionManager) InitSessionId(ctx ContextInf, keepIfNull ...bool) string {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	return m._initSessionId(ctx, keepIfNull...)
+}
+func (m *SessionManager) _initSessionId(ctx ContextInf, keepIfNull ...bool) string {
 	var sid string
 	sid = ctx.GetCookie(m.CookieKey.SessionId)
 	if len(sid) < 32 {
@@ -113,13 +118,13 @@ func (m *SessionManager) InitSessionId(ctx ContextInf, keepIfNull ...bool) strin
 }
 
 func (m *SessionManager) GetSession(ctx ContextInf) *Session {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	sid := ctx.GetCookie(m.CookieKey.SessionId)
 	if sid == "" {
 		return nil
 	}
-	s := m.GetSessionBySid(sid)
+	s := m._getSessionBySid(sid)
 	if s != nil {
 		// 续命
 		if m.maxSaveLifeTime > 0 {
@@ -129,8 +134,8 @@ func (m *SessionManager) GetSession(ctx ContextInf) *Session {
 						m.env, s.UserId, s.Username, gotime.MillSecStrCST8(s.LastActivityTime))
 					s.LastActivityTime = gotime.UnixNowMillSec()
 					s.SaveLifeTime += 1
-					m.updateCookies(ctx, s)
-					m.updateSession(s)
+					m._updateCookies(ctx, s)
+					m._updateSession(s)
 				}
 			}
 		}
@@ -142,6 +147,9 @@ func (m *SessionManager) GetSession(ctx ContextInf) *Session {
 func (m *SessionManager) GetSessionBySid(sid string) *Session {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
+	return m._getSessionBySid(sid)
+}
+func (m *SessionManager) _getSessionBySid(sid string) *Session {
 	k := m.cacheKeySid(sid)
 	obj, _ := redis.GetObj(k, (*Session)(nil))
 	if s, ok := obj.(*Session); ok {
@@ -153,16 +161,21 @@ func (m *SessionManager) GetSessionBySid(sid string) *Session {
 func (m *SessionManager) GetSessionByUid(uid int64) *Session {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
+	return m._getSessionByUid(uid)
+}
+func (m *SessionManager) _getSessionByUid(uid int64) *Session {
 	sid, _ := redis.Get(m.cacheKeyUid2Sid(uid))
 	if sid == "" {
 		return nil
 	}
-	return m.GetSessionBySid(sid)
+	return m._getSessionBySid(sid)
 }
 
 func (m *SessionManager) DoLogin(ctx ContextInf, userId int64, username string, userStatus int64, roleId int64, googleSecret string) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	s := &Session{
-		Sid:              m.InitSessionId(ctx),
+		Sid:              m._initSessionId(ctx),
 		UserId:           userId,
 		Username:         username,
 		LastActivityTime: gotime.UnixNowMillSec(),
@@ -175,15 +188,17 @@ func (m *SessionManager) DoLogin(ctx ContextInf, userId int64, username string, 
 	if s.Lan == "" {
 		s.Lan = "en"
 	}
-	m.updateCookies(ctx, s)
-	m.updateSession(s)
+	m._updateCookies(ctx, s)
+	m._updateSession(s)
 }
 
 func (m *SessionManager) DoLogout(ctx ContextInf) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	log.Info("清退Session: Env[%s]用户[%s]", m.env, m.CookieKey.UserId)
 	s := m.GetSession(ctx)
 	if s != nil {
-		m.removeSession(s)
+		m._removeSession(s)
 	}
 	m._expiredCookie(ctx, m.CookieKey.SessionId)
 	m._expiredCookie(ctx, m.CookieKey.UserId)
@@ -193,28 +208,27 @@ func (m *SessionManager) DoLogout(ctx ContextInf) {
 }
 
 func (m *SessionManager) DoLogoutByUserId(uid int64) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	log.Info("清退Session: Env[%s]用户[%v]", m.env, uid)
-	s := m.GetSessionByUid(uid)
+	s := m._getSessionByUid(uid)
 	if s != nil {
-		m.removeSession(s)
+		m._removeSession(s)
 	}
 }
 
 func (m *SessionManager) UpdateSession(s *Session) {
-	m.updateSession(s)
-}
-
-func (m *SessionManager) updateSession(s *Session) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+	m._updateSession(s)
+}
+func (m *SessionManager) _updateSession(s *Session) {
 	redis.SetObjAndExpire(m.cacheKeySid(s.Sid), s, int(m.survivalSeconds))
 	redis.SetAndExpire(m.cacheKeyUid2Sid(s.UserId), s.Sid, int(m.survivalSeconds))
 	log.Info("保存Session: Env[%s]用户[%v]session", m.env, s.UserId)
 }
 
-func (m *SessionManager) removeSession(s *Session) {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (m *SessionManager) _removeSession(s *Session) {
 	redis.Delete(m.cacheKeyUid2Sid(s.UserId)) // 去掉 userId - sessionId 映射关系
 	redis.Delete(m.cacheKeySid(s.Sid))        // delete session
 	log.Warn("清除Session: Env[%s]用户[%v]session", m.env, s.UserId)
