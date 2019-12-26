@@ -76,9 +76,9 @@ func (m *SessionManager) _setCookie(ctx ContextInf, key string, val string) {
 	//if key == m.CookieKey.SessionId {
 	//	ctx.SetCookie(key, val, m.survivalSeconds, "/", "", false, true)
 	//} else {
-	//	ctx.SetCookie(key, val, m.survivalSeconds, "/", "", false, true)
+	//	ctx.SetCookie(key, val, m.survivalSeconds, "/", "", false, false)
 	//}
-	ctx.SetCookie(key, val, m.survivalSeconds, "/", "", false, true)
+	ctx.SetCookie(key, val, m.survivalSeconds, "/", "", false, false)
 }
 
 func (m *SessionManager) _expiredCookie(ctx ContextInf, key string) {
