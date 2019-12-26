@@ -49,11 +49,11 @@ func NewSessManager(env string, saveLifeSeconds int64, maxSaveLifeTime int, surv
 	return &SessionManager{
 		env: env,
 		CookieKey: &cookieKey{
-			SessionId:  env + "_sessionID",
-			UserId:     env + "_userId",
-			UserStatus: env + "_code",
-			Lan:        env + "_lan",
-			Role:       env + "_role",
+			SessionId:  env + "SessionID",
+			UserId:     env + "UserId",
+			UserStatus: env + "Code",
+			Lan:        env + "Lan",
+			Role:       env + "Role",
 		},
 		saveLifeSeconds: saveLifeSeconds,
 		survivalSeconds: survivalSeconds,
