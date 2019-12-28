@@ -196,9 +196,12 @@ func (m *SessionManager) DoLogout(ctx ContextInf) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	log.Info("清退Session: Env[%s]用户[%s]", m.env, m.CookieKey.UserId)
-	s := m.GetSession(ctx)
-	if s != nil {
-		m._removeSession(s)
+	sid := ctx.GetCookie(m.CookieKey.SessionId)
+	if sid != "" {
+		s := m._getSessionBySid(sid)
+		if s != nil {
+			m._removeSession(s)
+		}
 	}
 	m._expiredCookie(ctx, m.CookieKey.SessionId)
 	m._expiredCookie(ctx, m.CookieKey.UserId)

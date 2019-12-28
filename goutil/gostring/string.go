@@ -40,6 +40,16 @@ func JoinIntSlice2String(intSlice []int, sep string) string {
 	return strings.Join(IntSlice2StrSlice(intSlice), sep)
 }
 
+func StrSplitWithTrim(str string, sep string) []string {
+	var out []string
+	for _, s := range strings.Split(str, sep) {
+		if strings.TrimSpace(s) != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 func StrSlice2IntSlice(strSlice []string) []int {
 	var intSlice []int
 	for _, s := range strSlice {
