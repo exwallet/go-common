@@ -16,7 +16,7 @@ type OnceLocker struct {
 	*sync.Mutex
 }
 
-func NewLocker() *OnceLocker {
+func NewOnceLocker() *OnceLocker {
 	return &OnceLocker{
 		isLock: false,
 		Mutex:  new(sync.Mutex),
